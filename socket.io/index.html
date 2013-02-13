@@ -1,0 +1,23 @@
+<html>
+  <head>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+      </head>
+  <body>
+    <h3>Socket.io playground</h3>
+    <p>Measurement value: <div id="m1_value">n/a</div></p>
+    <script>
+      var socket = io.connect('http://localhost');
+      socket.on('news', function (data) {
+        console.log(data);
+        socket.emit('my other event', { my: 'data' });
+      });
+      socket.on('measurements', function(data) {
+        console.log("Received: " + data.sensor);
+        console.log("div: " + $("div#m1_value").text());
+        $("div#m1_value").text(data.sensor);
+      });
+    </script>
+
+  </body>
+</html>

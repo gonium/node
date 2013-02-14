@@ -2,21 +2,39 @@
   <head>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
-      </head>
+    <script src="/js/raphael.2.1.0.min.js"></script>
+    <script src="/js/justgage.1.0.1.min.js"></script>
+  </head>
   <body>
     <h3>Socket.io playground</h3>
     <p>Measurement value: <div id="m1_value">n/a</div></p>
+    <p><div id="gauge" style="width:100px, height=80px"></div></p>
     <script>
+      var g;
       var socket = io.connect('http://localhost');
+      
+      window.onload = function() {
+        g= new JustGage({
+          id: "gauge", 
+          value: 0, 
+          min: 0,
+          max: 100,
+          title: "Titel"
+        });
+      };
+
       socket.on('news', function (data) {
         console.log(data);
         socket.emit('my other event', { my: 'data' });
       });
+
       socket.on('measurements', function(data) {
-        console.log("Received: " + data.sensor);
-        console.log("div: " + $("div#m1_value").text());
+        //        console.log("Received: " + data.sensor);
+        //        console.log("div: " + $("div#m1_value").text());
+        g.refresh(data.sensor);
         $("div#m1_value").text(data.sensor);
       });
+
     </script>
 
   </body>

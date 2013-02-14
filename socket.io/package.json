@@ -6,7 +6,10 @@
     "start": "node app"
   },
   "dependencies": {
+    "express": "*",
+    "jade": "*",
     "redis": "*",
+    "hiredis": "*",
     "socket.io": "0.9.13"
   }
 }

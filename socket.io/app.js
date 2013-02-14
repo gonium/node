@@ -1,6 +1,11 @@
-var app = require('http').createServer(handler)
-  , io = require('socket.io').listen(app)
-  , fs = require('fs')
+const PORT = 3000;
+const SERVER = 'localhost';
+const channel_current_measurements = 'current_measurements';
+
+var express=require('express');
+var app = module.exports = express();
+var server=require("http").createServer(app)
+  , io = require('socket.io').listen(server)
   , redis = require('redis')
 var rclient=redis.createClient();
 
@@ -9,41 +14,26 @@ rclient.on("error", function(err) {
 });
 
 
-app.listen(3000);
+// see http://stackoverflow.com/questions/4600952/node-js-ejs-example
+// for EJS
 
-function handler (req, res) {
-  fs.readFile(__dirname + '/index.html',
-  function (err, data) {
-    if (err) {
-      res.writeHead(500);
-      return res.end('Error loading index.html');
-    }
+app.use(express.errorHandler());
+app.set('views', __dirname + '/views');
+app.set('view engine', 'jade');
+app.get('/', function(req, res) {
+  res.render('index.jade', {title: "Horst"});
+});
+app.use(express.static(__dirname + '/public'));
 
-    res.writeHead(200);
-    res.end(data);
-  });
-}
-
-var m1="n/a";
-var update_measurements = function(err, data){
-  if(err) {
-    m1="n/a";
-  } else {
-    m1=data;
-  }
-};
+server.listen(PORT);
 
 io.sockets.on('connection', function (socket) {
-  rclient.get("Measurement1", update_measurements);
-  socket.emit('news', { hello: 'world' });
-  var updates = setInterval( function() {
-    rclient.get("Measurement1", update_measurements);
-    socket.volatile.emit('measurements', { sensor: m1 });
-  },5000);
-  socket.on('my other event', function (data) {
-    console.log(data);
+  rclient.subscribe(channel_current_measurements);
+  rclient.on("message", function(channel, msg) {
+    console.log(channel + ": " +msg);
+    socket.volatile.emit('measurements', { sensor: msg });
   });
   socket.on('disconnect', function() {
-    clearInterval(updates);
+    rclient.unsubscribe(channel_current_measurements);
   });
 });

@@ -11,7 +11,8 @@
 <script src="/js/justgage.1.0.1.min.js"></script>
 <script>
   var g;
-  var socket = io.connect('http://localhost');
+  var socket = io.connect('http://<%=server%>:<%=port%>');
+
 
   window.onload = function() {
     g= new JustGage({

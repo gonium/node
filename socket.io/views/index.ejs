@@ -1,0 +1,39 @@
+<% include header %>
+<div class="container">
+
+  <h1>Dashboard</h1>
+  <div id="gauge" style="width:200px;height:160px"><p>graphs</p></div>
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/raphael.2.1.0.min.js"></script>
+<script src="/js/justgage.1.0.1.min.js"></script>
+<script>
+  var g;
+  var socket = io.connect('http://localhost');
+
+  window.onload = function() {
+    g= new JustGage({
+      id: "gauge", 
+      value: 0, 
+      min: 0,
+      max: 100,
+      title: "Foo"
+    });
+  };
+
+  socket.on('news', function (data) {
+    console.log(data);
+    socket.emit('my other event', { my: 'data' });
+  });
+
+  socket.on('measurements', function(data) {
+    //        console.log("Received: " + data.sensor);
+    //        console.log("div: " + $("div#m1_value").text());
+    g.refresh(data.sensor);
+    //  $("div#m1_value").text(data.sensor);
+  });
+</script>
+
+<% include footer %>

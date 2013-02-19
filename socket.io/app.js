@@ -2,32 +2,59 @@ const PORT = 3000;
 const SERVER = '10.23.1.253';
 const channel_current_measurements = 'current_measurements';
 
-var express=require('express');
-var app = module.exports = express();
-var server=require("http").createServer(app)
+var application_root = __dirname
+  , path=require('path')
+  , express=require('express')
+  , app = module.exports = express()
+  , server=require("http").createServer(app)
   , io = require('socket.io').listen(server)
   , redis = require('redis')
-var sensorcache=require("./lib/sensorcache");
+  , sensorcache=require("./lib/sensorcache");
 
 
 // see http://stackoverflow.com/questions/4600952/node-js-ejs-example
 // for EJS
 
-app.use(express.errorHandler());
-app.set('views', __dirname + '/views');
-app.set('view engine', 'ejs');
-app.get('/sensor/:id', function(req, res) {
-  sensorcache.get_last_value(req.params.id);
-  res.end();
+app.configure(function () {
+  app.set('views', __dirname + '/views');
+  app.set('view engine', 'ejs');
+  app.use(express.bodyParser());
+  app.use(express.methodOverride());
+  app.use(app.router);
+  app.use(express.static(path.join(application_root, "public")));
+  app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
 });
-app.post('/sensor/:id/:value', function(req, res) {
-  sensorcache.add_value(req.params.id, req.params.value);
-  res.end();
+//app.use(express.static(__dirname + '/public'));
+
+// see http://www.pixelhandler.com/blog/2012/02/09/develop-a-restful-api-using-node-js-with-express-and-mongoose/
+
+app.get('/api', function(req, res) {
+  res.send("API is running.");
 });
+
+app.get('/api/sensor', function(req, res) {
+  sensorcache.list_sensors(req, res);
+});
+
+app.get('/api/sensor/:id/latest', function(req, res) {
+  sensorcache.get_last_value(req, res);
+});
+
+app.get('/api/sensor/:id', function(req, res) {
+  sensorcache.get_sensor(req, res);
+});
+
+app.put('/api/sensor/:id', function(req, res) {
+  sensorcache.add_sensor(req, res);
+});
+
+app.post('/api/sensor/:id', function(req, res) {
+  sensorcache.add_value(req, res);
+});
+
 app.get('/', function(req, res) {
   res.render('index.ejs', {"server": SERVER, "port": PORT});
 });
-app.use(express.static(__dirname + '/public'));
 
 server.listen(PORT);
 

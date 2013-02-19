@@ -10,6 +10,8 @@
     "ejs": "*",
     "redis": "*",
     "hiredis": "*",
-    "socket.io": "0.9.13"
+    "socket.io": "0.9.13",
+    "CBuffer": "*",
+    "request": "*"
   }
 }

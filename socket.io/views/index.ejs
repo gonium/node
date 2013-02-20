@@ -2,7 +2,10 @@
 <div class="container">
 
   <h1>Dashboard</h1>
-  <div id="gauge" style="width:200px;height:160px"><p>graphs</p></div>
+  <p align="center">
+    <div id="gauge" style="width:200px;height:160px"></div>
+    Last update: <div id="timestamp">n/a</div>
+  </p>
 
 </div>
 
@@ -29,11 +32,17 @@
     socket.emit('my other event', { my: 'data' });
   });
 
-  socket.on('measurements', function(data) {
-    //        console.log("Received: " + data.sensor);
+  socket.on('sensor_update', function(data) {
+    console.log("Received: " + JSON.stringify(data.sensor));
     //        console.log("div: " + $("div#m1_value").text());
-    g.refresh(data.sensor);
-    //  $("div#m1_value").text(data.sensor);
+    for(var key in data.sensor["value"]) {
+      measurement=data.sensor["value"][key.toString()];
+      timestamp=key;
+      var date = new Date(timestamp*1000);
+      g.refresh(measurement);
+      $("div#timestamp").text(date.getHours() +":" + date.getMinutes() +
+      ":" + date.getSeconds());
+    }
   });
 </script>
 

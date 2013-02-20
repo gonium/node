@@ -9,8 +9,9 @@ var application_root = __dirname
   , server=require("http").createServer(app)
   , io = require('socket.io').listen(server)
   , redis = require('redis')
-  , sensorcache=require("./lib/sensorcache");
+  , Cache=require("./lib/sensorcache");
 
+var sensorcache = new Cache();
 
 // see http://stackoverflow.com/questions/4600952/node-js-ejs-example
 // for EJS
@@ -24,9 +25,7 @@ app.configure(function () {
   app.use(express.static(path.join(application_root, "public")));
   app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
 });
-//app.use(express.static(__dirname + '/public'));
 
-// see http://www.pixelhandler.com/blog/2012/02/09/develop-a-restful-api-using-node-js-with-express-and-mongoose/
 
 app.get('/api', function(req, res) {
   res.send("API is running.");
@@ -59,16 +58,8 @@ app.get('/', function(req, res) {
 server.listen(PORT);
 
 io.sockets.on('connection', function (socket) {
-  var rclient=redis.createClient();
-  rclient.on("error", function(err) {
-    console.log("Redis client error: " + err);
-  });
-  rclient.subscribe(channel_current_measurements);
-  rclient.on("message", function(channel, msg) {
-    console.log(channel + ": " +msg);
-    socket.volatile.emit('measurements', { sensor: msg });
-  });
-  socket.on('disconnect', function() {
-    rclient.unsubscribe(channel_current_measurements);
+  console.log("Registering new client.");
+  sensorcache.on('sensor_update', function(msg) {
+    socket.volatile.emit('sensor_update', { sensor: msg });
   });
 });

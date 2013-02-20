@@ -1,13 +1,60 @@
 <% include header %>
-<div class="container">
+<div class="tab-content">
+  <div class="tab-pane active" id="dashboard">
+    <div class="container">
+      <div class="row-fluid">
+        <div class="span12">
+          <h2 class="text-center">Dashboard</h2>
+        </div>
+        <div class="span12">
+          <p align="center">
+          <div id="1" style="width:200px;height:160px"></div>
+          Last update: <div id="timestamp">n/a</div>
+          </p>
+          <p align="center">
+          <div id="2" style="width:200px;height:160px"></div>
+          Last update: <div id="timestamp">n/a</div>
+          </p>
 
-  <h1>Dashboard</h1>
-  <p align="center">
-    <div id="gauge" style="width:200px;height:160px"></div>
-    Last update: <div id="timestamp">n/a</div>
-  </p>
+        </div>
+      </div>
+    </div>
+  </div> <!-- dashboard tab -->
+
+  <div class="tab-pane" id="sensors">
+    <div class="container">
+      <div class="row-fluid">
+        <div class="span12">
+          <h2 class="text-center">Sensors</h2>
+        </div>
+        <div class="span12">
+          <p align="center">
+          <div id="gauge" style="width:200px;height:160px"></div>
+          Last update: <div id="timestamp">n/a</div>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div> <!-- sensors tab -->
+
+  <div class="tab-pane" id="actors">
+    <div class="container">
+      <div class="row-fluid">
+        <div class="span12">
+          <h2 class="text-center">Actors</h2>
+        </div>
+        <div class="span12">
+          <p align="center">
+          <div id="gauge" style="width:200px;height:160px"></div>
+          Last update: <div id="timestamp">n/a</div>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div> <!-- actors tab -->
 
 </div>
+
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/raphael.2.1.0.min.js"></script>
@@ -16,32 +63,45 @@
   var g;
   var socket = io.connect('http://<%=server%>:<%=port%>');
 
+  // TODO: Render a list of currently available sensors here.
+  // Then: Use the list to create an map of gauges that will be
+  // updated when a sensor_update occurs.
+  
+  var gauge_data={};
+  var gauges={};
+  gauge_data["1"]={title: "Horst", value: 0};
+  gauge_data["2"]={title: "Uschi", value: 30};
 
   window.onload = function() {
-    g= new JustGage({
-      id: "gauge", 
-      value: 0, 
-      min: 0,
-      max: 100,
-      title: "Foo"
-    });
+    for (var g_id in gauge_data) {
+      var current = gauge_data[g_id];
+      console.log("Preparing gauge for " + JSON.stringify(current.title));
+      gauges[g_id] = (new JustGage({
+        id: g_id, 
+        value: current.value, 
+        min: 0,
+        max: 100,
+        title: current.title
+      }));
+    }
   };
-
-  socket.on('news', function (data) {
-    console.log(data);
-    socket.emit('my other event', { my: 'data' });
-  });
 
   socket.on('sensor_update', function(data) {
     console.log("Received: " + JSON.stringify(data.sensor));
     //        console.log("div: " + $("div#m1_value").text());
+    g_id=data.sensor.sensor_id;
     for(var key in data.sensor["value"]) {
       measurement=data.sensor["value"][key.toString()];
       timestamp=key;
       var date = new Date(timestamp*1000);
-      g.refresh(measurement);
-      $("div#timestamp").text(date.getHours() +":" + date.getMinutes() +
-      ":" + date.getSeconds());
+      gauges[g_id].refresh(measurement);
+      var hours=date.getHours();
+      if (hours   < 10) {hours   = "0"+hours;}
+      var mins=date.getMinutes();
+      if (mins < 10) {mins = "0"+mins;}
+      var seconds=date.getSeconds();
+      if (seconds < 10) {seconds = "0"+seconds;}
+      $("div#timestamp").text(hours+":" + mins + ":" + seconds);
     }
   });
 </script>

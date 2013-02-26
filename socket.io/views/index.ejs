@@ -4,56 +4,57 @@
     <div class="container">
       <div class="row-fluid">
         <div class="span12">
-          <h2 class="text-center">Dashboard</h2>
-        </div>
-        <div class="span12">
-          <p align="center">
-          <div id="1" style="width:200px;height:160px"></div>
-          Last update: <div id="timestamp">n/a</div>
-          </p>
-          <p align="center">
-          <div id="2" style="width:200px;height:160px"></div>
-          Last update: <div id="timestamp">n/a</div>
-          </p>
+          <div class="tabbable">
+            <ul class="nav nav-tabs">
+              <li class="active"><a href="#dash" data-toggle="tab">Dashboard</a></li>
+              <li><a href="#sensors" data-toggle="tab">Sensors</a></li>
+              <li><a href="#actors" data-toggle="tab">Actors</a></li>
+            </ul>
+          </div>
+          <div class="tab-content">
+            <div class="tab-pane active" id="dash">
+              <h2 class="text-center">Dashboard</h2>
+              <div class="row-fluid">
+                <div class="span3">
+                  <p>Last update: <div id="timestamp">n/a</div></p>
+                </div>
+                <div class="span9">
 
-        </div>
+                  <% for (var i=0; i < sensorlist.length; i++) { 
+                  current=sensorlist[i];
+                  %>
+                  <p align="center">
+                  <div id="<%=current.sensor_id%>" style="width:200px;height:160px"></div>
+                  </p>
+                  <% } %>
+
+                </div>
+              </div>
+
+
+            </div>
+            <div class="tab-pane" id="sensors">
+              <h2 class="text-center">Sensors</h2>
+              <p align="center">
+              <div id="gauge" style="width:200px;height:160px"></div>
+              Last update: <div id="timestamp">n/a</div>
+              </p>
+
+            </div>
+            <div class="tab-pane" id="actors">
+              <h2 class="text-center">Actors</h2>
+              <p align="center">
+              <div id="gauge" style="width:200px;height:160px"></div>
+              Last update: <div id="timestamp">n/a</div>
+              </p>
+            </div>
+
+          </div>
+        </div> <!--- tab-content -->
       </div>
     </div>
-  </div> <!-- dashboard tab -->
-
-  <div class="tab-pane" id="sensors">
-    <div class="container">
-      <div class="row-fluid">
-        <div class="span12">
-          <h2 class="text-center">Sensors</h2>
-        </div>
-        <div class="span12">
-          <p align="center">
-          <div id="gauge" style="width:200px;height:160px"></div>
-          Last update: <div id="timestamp">n/a</div>
-          </p>
-        </div>
-      </div>
-    </div>
-  </div> <!-- sensors tab -->
-
-  <div class="tab-pane" id="actors">
-    <div class="container">
-      <div class="row-fluid">
-        <div class="span12">
-          <h2 class="text-center">Actors</h2>
-        </div>
-        <div class="span12">
-          <p align="center">
-          <div id="gauge" style="width:200px;height:160px"></div>
-          Last update: <div id="timestamp">n/a</div>
-          </p>
-        </div>
-      </div>
-    </div>
-  </div> <!-- actors tab -->
-
-</div>
+  </div>
+</div> <!-- actors tab -->
 
 
 <script src="/socket.io/socket.io.js"></script>
@@ -65,12 +66,17 @@
 
   // TODO: Render a list of currently available sensors here.
   // Then: Use the list to create an map of gauges that will be
-  // updated when a sensor_update occurs.
-  
+  // updated when a sensor_update occurs.  sensorlist
+
   var gauge_data={};
   var gauges={};
-  gauge_data["1"]={title: "Horst", value: 0};
-  gauge_data["2"]={title: "Uschi", value: 30};
+
+  <% for (var i=0; i < sensorlist.length; i++) { 
+    current=sensorlist[i];
+    %>
+    gauge_data["<%=current.sensor_id%>"]= {title: "<%=current.name%>",
+      value: <%-JSON.stringify(current.values)%> };
+    <% } %>
 
   window.onload = function() {
     for (var g_id in gauge_data) {
@@ -78,12 +84,14 @@
       console.log("Preparing gauge for " + JSON.stringify(current.title));
       gauges[g_id] = (new JustGage({
         id: g_id, 
-        value: current.value, 
+        value: "n/a", 
         min: 0,
         max: 100,
         title: current.title
       }));
     }
+    // get up-to-date values for all sensors
+    socket.emit('sensor_refresh_data');
   };
 
   socket.on('sensor_update', function(data) {
@@ -103,6 +111,11 @@
       if (seconds < 10) {seconds = "0"+seconds;}
       $("div#timestamp").text(hours+":" + mins + ":" + seconds);
     }
+  });
+  socket.on('sensor_metadata_refresh', function() {
+    // Trigger a hard reload from the server. This is initiated
+    // by the server e.g. if a new sensor is available.
+    window.location.reload(true);
   });
 </script>
 

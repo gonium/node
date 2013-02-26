@@ -52,7 +52,13 @@ app.post('/api/sensor/:id', function(req, res) {
 });
 
 app.get('/', function(req, res) {
-  res.render('index.ejs', {"server": SERVER, "port": PORT});
+  console.log("Sensorlist:" + JSON.stringify(sensorcache.render_sensor_list()));
+  res.render('index.ejs', 
+    {
+      "server": SERVER, 
+      "port": PORT,
+      "sensorlist": sensorcache.render_sensor_list()
+    });
 });
 
 server.listen(PORT);
@@ -62,4 +68,18 @@ io.sockets.on('connection', function (socket) {
   sensorcache.on('sensor_update', function(msg) {
     socket.volatile.emit('sensor_update', { sensor: msg });
   });
+  // If the sensor metadata changes (e.g. a new sensor occurs),
+  // let the client know. This triggers e.g. a refresh of the HTML 
+  // page.
+  sensorcache.on('sensor_metadata_refresh', function(msg) {
+    socket.volatile.emit('sensor_metadata_refresh');
+  });
+  // a client can also initiate a data update.
+  socket.on('sensor_refresh_data', function() {
+    console.log("Refresh data event.");
+    sensorcache.send_current_data(function(msg) {
+      socket.volatile.emit('sensor_update', { sensor: msg });
+    });
+  });
 });
+

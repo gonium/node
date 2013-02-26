@@ -9,7 +9,7 @@ var SensorCache = function() {
   var self=this;
   var sensors={};
 
-  render_sensor_lastvalue = function(sensor) {
+  this.render_sensor_lastvalue = function(sensor) {
     response={};
     response["sensor_id"]=sensor.id;
     response["value"]=sensor.values.last();
@@ -24,12 +24,16 @@ var SensorCache = function() {
     return response;
   }
 
-  this.list_sensors = function(req, res) {
+  this.render_sensor_list = function() {
     retval=new Array();
     for (var sensoridx in sensors) {
       retval.push(render_sensor_full(sensors[sensoridx]));
     }
-    res.send(JSON.stringify(retval));
+    return retval;
+  }
+
+  this.list_sensors = function(req, res) {
+   res.send(JSON.stringify(this.render_sensor_list()));
   }
 
   this.add_sensor = function(req, res) {
@@ -52,6 +56,7 @@ var SensorCache = function() {
       sensor.values.push(entry);
     } 
     sensors[sensor.id] = sensor;
+    self.emit('sensor_metadata_refresh');
     res.send("New sensor " + sensor.id + " added.");
   }
 
@@ -65,6 +70,15 @@ var SensorCache = function() {
     }
   }
 
+  this.send_current_data = function(callback) {
+    for (key in sensors) {
+      console.log("Sensors: " + JSON.stringify(sensors));
+      var sensor = sensors[key];
+      console.log("Emitting last sensor value: " + JSON.stringify(self.render_sensor_lastvalue(sensor)));
+      callback(self.render_sensor_lastvalue(sensor));
+    }
+  }
+
   this.add_value = function(req, res) {
     sensor_id=req.params.id;
     if (sensor_id in sensors) {
@@ -74,8 +88,8 @@ var SensorCache = function() {
         var entry={};
         entry[unix]=req.body.value;
         sensor.values.push(entry);
-        console.log("Emitting: " + JSON.stringify(render_sensor_lastvalue(sensor)));
-        self.emit('sensor_update', render_sensor_lastvalue(sensor));
+        console.log("Emitting last sensor value: " + JSON.stringify(this.render_sensor_lastvalue(sensor)));
+        self.emit('sensor_update', this.render_sensor_lastvalue(sensor));
         res.send("OK");
       } else {
         res.send("Adding a value to sensor "+ sensor_id+" requires a value.", 422);

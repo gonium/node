@@ -19,15 +19,17 @@
                   <p>Last update: <div id="timestamp">n/a</div></p>
                 </div>
                 <div class="span9">
+                  <div class="row-fluid">
 
-                  <% for (var i=0; i < sensorlist.length; i++) { 
-                  current=sensorlist[i];
-                  %>
-                  <p align="center">
-                  <div id="<%=current.sensor_id%>" style="width:200px;height:160px"></div>
-                  </p>
-                  <% } %>
+                    <% for (var i=0; i < sensorlist.length; i++) { 
+                    current=sensorlist[i];
+                    %>
+                    <p align="center">
+                    <div id="<%=current.sensor_id%>" style="width:200px;height:160px"></div>
+                    </p>
+                    <% } %>
 
+                  </div>
                 </div>
               </div>
 
@@ -54,7 +56,7 @@
       </div>
     </div>
   </div>
-</div> <!-- actors tab -->
+</div> 
 
 
 <script src="/socket.io/socket.io.js"></script>
